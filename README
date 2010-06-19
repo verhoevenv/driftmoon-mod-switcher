@@ -2,6 +2,8 @@ Driftmoon Mod Switcher by Vincent Verhoeven <verhoevenv@gmail.com>.
 
 A simple C# utility to switch between mods in the Driftmoon game. This tool works with the preview version (it might require administrator rights), but it might or might not work with further versions.
 
+Built with Visual Studio C# 2008 Express Edition. Other tools might work, go ahead and send patches to improve compatibility.
+
 GPL v3 licensed.
 
 Driftmoon is a game by Ville Monkkonen, I have no affiliations with Ville other than that I like his games.
