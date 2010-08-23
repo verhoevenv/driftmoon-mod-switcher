@@ -157,6 +157,7 @@ namespace driftmoon_mod_switcher {
                 foreach (string line in lines) {
                     Match m = modPattern.Match(line);
                     if (m.Success) {
+                        //FIXME: if no line "Mod=" exists, no new will be written?
                         tw.WriteLine("Mod=" + newMod);
                     } else {
                         tw.WriteLine(line);
@@ -175,6 +176,8 @@ namespace driftmoon_mod_switcher {
             DialogResult result = f.ShowDialog();
             if (result == DialogResult.OK) {
                 string d = f.SelectedPath;
+                //FIXME: do a sanity check on the directory being a mod
+                //TODO: what if mod already installed?
                 try {
                     DirectoryCopy(d, InstallDirT.Text + d.Substring(d.LastIndexOf("\\")));
                     changeMod(d.Substring(d.LastIndexOf("\\") + 1));
