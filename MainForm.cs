@@ -176,6 +176,7 @@ namespace driftmoon_mod_switcher {
             DialogResult result = f.ShowDialog();
             if (result == DialogResult.OK) {
                 string d = f.SelectedPath;
+                string newMod = d.Substring(d.LastIndexOf("\\") + 1);
                 //FIXME: do a sanity check on the directory being a mod
                 //TODO: what if mod already installed?
                 try {
@@ -185,8 +186,8 @@ namespace driftmoon_mod_switcher {
                     popup.Show();
                     popup.Location = new Point(posx, posy);
                     popup.Update();
-                    DirectoryCopy(d, InstallDirT.Text + d.Substring(d.LastIndexOf("\\")));
-                    changeMod(d.Substring(d.LastIndexOf("\\") + 1));
+                    DirectoryCopy(d, InstallDirT.Text + "\\" + newMod);
+                    changeMod(newMod);
                     refreshMods();
                     popup.Hide();
                 } catch (UnauthorizedAccessException ex) {
