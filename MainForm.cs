@@ -179,9 +179,16 @@ namespace driftmoon_mod_switcher {
                 //FIXME: do a sanity check on the directory being a mod
                 //TODO: what if mod already installed?
                 try {
+                    PleaseWait popup = new PleaseWait();
+                    int posx = this.Location.X + (this.Size.Width - popup.Size.Width) / 2;
+                    int posy = this.Location.Y + (this.Size.Height - popup.Size.Height) / 2;
+                    popup.Show();
+                    popup.Location = new Point(posx, posy);
+                    popup.Update();
                     DirectoryCopy(d, InstallDirT.Text + d.Substring(d.LastIndexOf("\\")));
                     changeMod(d.Substring(d.LastIndexOf("\\") + 1));
                     refreshMods();
+                    popup.Hide();
                 } catch (UnauthorizedAccessException ex) {
                     MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
