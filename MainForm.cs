@@ -157,11 +157,15 @@ namespace driftmoon_mod_switcher {
         private void changeMod(string newMod) {
             addLog("Setting current mod to " + newMod);
             TextReader tr = new StreamReader(InstallDirT.Text + "\\options.ini");
-            string options = tr.ReadToEnd();
+            List<string> lines = new List<string>();
+            string l = tr.ReadLine();
+            while (l != null) {
+                lines.Add(l);
+                l = tr.ReadLine();
+            }
             tr.Close();
-            string[] lines = options.Split(new string[] { "\r\n" }, StringSplitOptions.None);
+
             try {
-                //FIXME: somehow, extra lines get added to the end?
                 TextWriter tw = new StreamWriter(InstallDirT.Text + "\\options.ini");
                 foreach (string line in lines) {
                     Match m = modPattern.Match(line);
