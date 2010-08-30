@@ -236,7 +236,7 @@ namespace driftmoon_mod_switcher {
         }
 
         private void addLog(string logtxt) {
-            LogT.Text += logtxt + Environment.NewLine;
+            LogT.AppendText(logtxt + Environment.NewLine);
         }
     }
 }
