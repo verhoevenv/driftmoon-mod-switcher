@@ -31,6 +31,7 @@ using System.IO;
 namespace driftmoon_mod_switcher {
     public partial class MainForm : Form {
         private Regex modPattern = new Regex("^Mod=([\\w-]*)", RegexOptions.Multiline);
+        private Regex readmePathPattern = new Regex(@"^[/\\]?(([\w.])+[/\\])*([\w.]*)?\r?$", RegexOptions.Multiline);
         private Boolean settingsChanged = false;
 
         public MainForm() {
@@ -51,8 +52,6 @@ namespace driftmoon_mod_switcher {
                 TextReader tr = new StreamReader(Application.UserAppDataPath + "\\driftmoonpath.txt");
                 string driftmoondir = tr.ReadLine();
                 tr.Close();
-                if (!isDriftmoonDir(driftmoondir))
-                    throw new ApplicationException("No valid settings found");
                 setDriftmoonDir(driftmoondir);
             } catch (IOException) {
                 throw new ApplicationException("No settings found");
@@ -68,8 +67,10 @@ namespace driftmoon_mod_switcher {
         }
 
         private void refreshMods() {
+            addLog("Searching for mods...");
             refreshModList();
             refreshCurrentMod();
+            addLog("Found all mods.");
         }
 
         private void refreshCurrentMod() {
@@ -105,10 +106,16 @@ namespace driftmoon_mod_switcher {
             setDriftmoonDir(d);
         }
 
-        private void setDriftmoonDir(string d){
+        private void setDriftmoonDir(string d) {
+            clearLog();
             if (isDriftmoonDir(d)) {
+                addLog("Found Driftmoon directory...");
                 InstallDirT.Text = d;
                 refreshMods();
+            } else {
+                MessageBox.Show("No Driftmoon directory found in " + d +
+                    ", please select a valid Driftmoon directory", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -148,6 +155,7 @@ namespace driftmoon_mod_switcher {
         }
 
         private void changeMod(string newMod) {
+            addLog("Setting current mod to " + newMod);
             TextReader tr = new StreamReader(InstallDirT.Text + "\\options.ini");
             string options = tr.ReadToEnd();
             tr.Close();
@@ -177,24 +185,114 @@ namespace driftmoon_mod_switcher {
             DialogResult result = f.ShowDialog();
             if (result == DialogResult.OK) {
                 string d = f.SelectedPath;
-                string newMod = d.Substring(d.LastIndexOf("\\") + 1);
-                //FIXME: do a sanity check on the directory being a mod
-                //TODO: what if mod already installed?
-                try {
-                    PleaseWait popup = new PleaseWait();
-                    int posx = this.Location.X + (this.Size.Width - popup.Size.Width) / 2;
-                    int posy = this.Location.Y + (this.Size.Height - popup.Size.Height) / 2;
-                    popup.Show();
-                    popup.Location = new Point(posx, posy);
-                    popup.Update();
-                    DirectoryCopy(d, InstallDirT.Text + "\\" + newMod);
-                    changeMod(newMod);
-                    refreshMods();
-                    popup.Hide();
-                } catch (UnauthorizedAccessException ex) {
-                    MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                installMod(d);
+            }
+        }
+
+        private void installMod(string d) {
+            string realmod = d;
+            if (!isModDir(d)) {
+                string[] subdirs = Directory.GetDirectories(d);
+                if (subdirs.Length == 1) {
+                    addLog("No mod found here, trying subdirectory...");
+                    realmod = subdirs[0];
+                } else {
+                    MessageBox.Show("No mod found in this directory, sorry!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
                 }
             }
+            addLog("Trying to install from " + realmod);
+            string newMod = realmod.Substring(realmod.LastIndexOf("\\") + 1);
+
+            //TODO: what if mod already installed?
+            try {
+                PleaseWait popup = new PleaseWait();
+                int posx = this.Location.X + (this.Size.Width - popup.Size.Width) / 2;
+                int posy = this.Location.Y + (this.Size.Height - popup.Size.Height) / 2;
+                popup.Show();
+                popup.Location = new Point(posx, posy);
+                popup.Update();
+                DirectoryCopy(realmod, InstallDirT.Text + "\\" + newMod);
+                installDependencies(d, newMod);
+                installDependencies(InstallDirT.Text + "\\" + newMod, newMod);
+                changeMod(newMod);
+                addLog("Succeeded installing " + newMod + "!");
+                refreshMods();
+                popup.Hide();
+            } catch (UnauthorizedAccessException ex) {
+                MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private bool isModDir(string path) {
+            return Directory.Exists(path) && Directory.Exists(path + "\\script");
+        }
+
+        private void installDependencies(string searchpath, string destinationMod) {
+            List<string> toInstall = gatherDependencies(searchpath);
+            //TODO: might want to make some sort of abstract 'Tasks' of the copy jobs to make a progress bar
+            string basedir = InstallDirT.Text;
+            foreach (string s in toInstall) {
+                string from = basedir + "\\" + s;
+                string to = basedir + "\\" + destinationMod + "\\" + s.Substring("mainmod\\".Length);
+                addLog(from + " --> " + to);
+                if (File.Exists(from)) {
+                    if (File.Exists(to)) {
+                        addLog("Destination file already exists, skipping...");
+                    }
+                    File.Copy(from, to, false);
+                } else {
+                    if (Directory.Exists(from)) {
+                        if (Directory.Exists(to)) {
+                            addLog("Destination directory already exists, merging but skipping existing files...");
+                        }
+                        DirectoryCopy(from, to);
+                    } else {
+                        addLog("Source file missing!");
+                        //TODO: add to error message
+                    }
+                }
+            }
+            //if error message is not empty, show it in popup
+        }
+
+        private List<string> gatherDependencies(string moddir) {
+            //paths returned do not include "Driftmoon", starting nor trailing slashes
+            List<string> deps = new List<string>();
+            DirectoryInfo di = new DirectoryInfo(moddir);
+            FileInfo[] fis = di.GetFiles();
+            foreach (FileInfo fi in fis) {
+                string s = fi.Name.ToLower();
+                if (s.Contains("readme")) {
+                    TextReader tr = fi.OpenText();
+                    string contents = tr.ReadToEnd();
+                    tr.Close();
+                    MatchCollection matches = readmePathPattern.Matches(contents);
+                    if (matches.Count != 0) {
+                        addLog("Found dependencies in " + s + ", installing...");
+                    }
+                    foreach (Match match in matches) {
+                        string path = match.ToString();
+                        if (path.EndsWith("\r")) {
+                            path = path.Remove(path.Length - 1);
+                        }
+                        path = path.Replace("/", "\\");
+                        if (path.StartsWith("\\")) {
+                            path = path.Substring(path.Length - 1);
+                        }
+                        if (path.StartsWith("Driftmoon\\")) {
+                            path = path.Substring("Driftmoon\\".Length);
+                        }
+                        if (path.EndsWith("\\")) {
+                            path = path.Remove(path.Length - 1);
+                        }
+                        if (!path.Equals("")) {
+                            deps.Add(path);
+                        }
+                    }
+                }
+            }
+            return deps;
         }
 
         private static void DirectoryCopy(
