@@ -160,6 +160,7 @@ namespace driftmoon_mod_switcher
             this.LogT.Multiline = true;
             this.LogT.Name = "LogT";
             this.LogT.ReadOnly = true;
+            this.LogT.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.LogT.Size = new System.Drawing.Size(438, 78);
             this.LogT.TabIndex = 9;
             // 
