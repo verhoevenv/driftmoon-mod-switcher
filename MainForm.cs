@@ -231,5 +231,12 @@ namespace driftmoon_mod_switcher {
             saveSettings();
         }
 
+        private void clearLog() {
+            LogT.Text = "";
+        }
+
+        private void addLog(string logtxt) {
+            LogT.Text += logtxt + Environment.NewLine;
+        }
     }
 }
