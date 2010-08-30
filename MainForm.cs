@@ -232,6 +232,7 @@ namespace driftmoon_mod_switcher {
             List<string> toInstall = gatherDependencies(searchpath);
             //TODO: might want to make some sort of abstract 'Tasks' of the copy jobs to make a progress bar
             string basedir = InstallDirT.Text;
+            List<string> errors = new List<string>();
             foreach (string s in toInstall) {
                 string from = basedir + "\\" + s;
                 string to = basedir + "\\" + destinationMod + "\\" + s.Substring("mainmod\\".Length);
@@ -249,11 +250,14 @@ namespace driftmoon_mod_switcher {
                         DirectoryCopy(from, to);
                     } else {
                         addLog("Source file missing!");
-                        //TODO: add to error message
+                        errors.Add("The following dependency was not found and could not be copied: " + from);
                     }
                 }
             }
-            //if error message is not empty, show it in popup
+            if (errors.Count > 0) {
+                string errormsg = string.Join(Environment.NewLine, errors.ToArray());
+                MessageBox.Show(errormsg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private List<string> gatherDependencies(string moddir) {
