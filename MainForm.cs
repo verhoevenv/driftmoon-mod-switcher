@@ -30,7 +30,7 @@ using System.IO;
 
 namespace driftmoon_mod_switcher {
     public partial class MainForm : Form {
-        private Regex modPattern = new Regex("^Mod=(\\w*)", RegexOptions.Multiline);
+        private Regex modPattern = new Regex("^Mod=([\\w-]*)", RegexOptions.Multiline);
         private Boolean settingsChanged = false;
 
         public MainForm() {
