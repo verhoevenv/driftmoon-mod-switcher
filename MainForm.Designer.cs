@@ -52,9 +52,6 @@ namespace driftmoon_mod_switcher
             this.InstallDirL = new System.Windows.Forms.Label();
             this.InstallDirT = new System.Windows.Forms.TextBox();
             this.InstallDirB = new System.Windows.Forms.Button();
-            this.CurrentModL = new System.Windows.Forms.Label();
-            this.CurrentModT = new System.Windows.Forms.TextBox();
-            this.CurrentModB = new System.Windows.Forms.Button();
             this.InstallFromZipB = new System.Windows.Forms.Button();
             this.LogT = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
@@ -64,10 +61,11 @@ namespace driftmoon_mod_switcher
             this.InstalledLB.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.InstalledLB.ColumnWidth = 20;
+            this.InstalledLB.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawVariable;
             this.InstalledLB.FormattingEnabled = true;
             this.InstalledLB.Location = new System.Drawing.Point(12, 50);
             this.InstalledLB.Name = "InstalledLB";
-            this.InstalledLB.Size = new System.Drawing.Size(439, 134);
+            this.InstalledLB.Size = new System.Drawing.Size(439, 173);
             this.InstalledLB.TabIndex = 0;
             // 
             // InstalledL
@@ -110,36 +108,6 @@ namespace driftmoon_mod_switcher
             this.InstallDirB.UseVisualStyleBackColor = true;
             this.InstallDirB.Click += new System.EventHandler(this.InstallDirB_Click);
             // 
-            // CurrentModL
-            // 
-            this.CurrentModL.AutoSize = true;
-            this.CurrentModL.Location = new System.Drawing.Point(12, 207);
-            this.CurrentModL.Name = "CurrentModL";
-            this.CurrentModL.Size = new System.Drawing.Size(67, 13);
-            this.CurrentModL.TabIndex = 5;
-            this.CurrentModL.Text = "Current mod:";
-            // 
-            // CurrentModT
-            // 
-            this.CurrentModT.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.CurrentModT.Enabled = false;
-            this.CurrentModT.Location = new System.Drawing.Point(85, 204);
-            this.CurrentModT.Name = "CurrentModT";
-            this.CurrentModT.Size = new System.Drawing.Size(243, 20);
-            this.CurrentModT.TabIndex = 6;
-            // 
-            // CurrentModB
-            // 
-            this.CurrentModB.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.CurrentModB.Location = new System.Drawing.Point(334, 202);
-            this.CurrentModB.Name = "CurrentModB";
-            this.CurrentModB.Size = new System.Drawing.Size(117, 23);
-            this.CurrentModB.TabIndex = 7;
-            this.CurrentModB.Text = "Use selected";
-            this.CurrentModB.UseVisualStyleBackColor = true;
-            this.CurrentModB.Click += new System.EventHandler(this.CurrentModB_Click);
-            // 
             // InstallFromZipB
             // 
             this.InstallFromZipB.Anchor = System.Windows.Forms.AnchorStyles.Top;
@@ -161,19 +129,16 @@ namespace driftmoon_mod_switcher
             this.LogT.Name = "LogT";
             this.LogT.ReadOnly = true;
             this.LogT.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.LogT.Size = new System.Drawing.Size(438, 78);
+            this.LogT.Size = new System.Drawing.Size(438, 128);
             this.LogT.TabIndex = 9;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(458, 349);
+            this.ClientSize = new System.Drawing.Size(458, 399);
             this.Controls.Add(this.LogT);
             this.Controls.Add(this.InstallFromZipB);
-            this.Controls.Add(this.CurrentModB);
-            this.Controls.Add(this.CurrentModT);
-            this.Controls.Add(this.CurrentModL);
             this.Controls.Add(this.InstallDirB);
             this.Controls.Add(this.InstallDirT);
             this.Controls.Add(this.InstallDirL);
@@ -195,9 +160,6 @@ namespace driftmoon_mod_switcher
         private System.Windows.Forms.Label InstallDirL;
         private System.Windows.Forms.TextBox InstallDirT;
         private System.Windows.Forms.Button InstallDirB;
-        private System.Windows.Forms.Label CurrentModL;
-        private System.Windows.Forms.TextBox CurrentModT;
-        private System.Windows.Forms.Button CurrentModB;
         private System.Windows.Forms.Button InstallFromZipB;
         private System.Windows.Forms.TextBox LogT;
     }

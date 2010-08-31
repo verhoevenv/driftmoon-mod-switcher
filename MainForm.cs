@@ -33,6 +33,8 @@ namespace driftmoon_mod_switcher {
         private Regex modPattern = new Regex("^Mod=([\\w-]*)", RegexOptions.Multiline);
         private Regex readmePathPattern = new Regex(@"^[/\\]?(([\w.])+[/\\])*([\w.]*)?\r?$", RegexOptions.Multiline);
         private Boolean settingsChanged = false;
+        private string currentMod = "";
+        private Dictionary<string, bool> fullyInstalled = new Dictionary<string, bool>();
 
         public MainForm() {
             InitializeComponent();
@@ -45,6 +47,8 @@ namespace driftmoon_mod_switcher {
                 findDriftmoonDir();
                 settingsChanged = true;
             }
+            InstalledLB.DrawItem += new DrawItemEventHandler(InstalledLB_DrawItem);
+            InstalledLB.DoubleClick += new EventHandler(InstalledLB_DoubleClick);
         }
 
         private void loadSettings() {
@@ -69,11 +73,11 @@ namespace driftmoon_mod_switcher {
         private void refreshMods() {
             addLog("Searching for mods...");
             refreshModList();
-            refreshCurrentMod();
+            currentMod = getCurrentMod();
             addLog("Found all mods.");
         }
 
-        private void refreshCurrentMod() {
+        private string getCurrentMod() {
             TextReader tr = new StreamReader(InstallDirT.Text + "\\options.ini");
             string options = tr.ReadToEnd();
             tr.Close();
@@ -81,25 +85,57 @@ namespace driftmoon_mod_switcher {
             string mod = m.Groups[1].Value;
             Match m2 = m.NextMatch();
             if (m2.Success) {
-                MessageBox.Show("There are multiple mods defined in options.ini, please fix this before I break something. I am clumsy.",
-                        "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                throw new ApplicationException("Multiple mods defined in options.ini, fix this first please.");
             }
-            CurrentModT.Text = mod;
-            InstalledLB.SelectedItem = mod;
+            return mod;
+        }
+
+        private bool isCurrentMod(string mod) {
+            if (currentMod == null) {
+                currentMod = getCurrentMod();
+            }
+            return currentMod.Equals(mod);
         }
 
         private void refreshModList() {
             string[] dirs = Directory.GetDirectories(InstallDirT.Text);
-            List<string> mods = new List<string>();
             foreach (string dir in dirs) {
                 string lastpart = dir.Substring(dir.LastIndexOf("\\") + 1);
                 if (lastpart != "ui" && lastpart != "data") {
-                    mods.Add(lastpart);
+                    fullyInstalled[lastpart] = true;
                 }
             }
             InstalledLB.Items.Clear();
-            InstalledLB.Items.AddRange(mods.ToArray());
+            InstalledLB.Items.AddRange(fullyInstalled.Keys.ToArray());
         }
+
+        private bool isFullyInstalled(string mod) {
+            return fullyInstalled[mod];
+        }
+
+        private void InstalledLB_DrawItem(object sender,
+    System.Windows.Forms.DrawItemEventArgs e) {
+            // Draw the background of the ListBox control for each item.
+            e.DrawBackground();
+            
+            // Define the default color of the brush as black.
+            Brush drawBrush = Brushes.Black;
+            Font drawFont = e.Font;
+
+
+            string mod = (string)InstalledLB.Items[e.Index];
+            if (! isFullyInstalled(mod)) {
+               drawBrush = Brushes.Gray;
+            }
+            if (isCurrentMod(mod)) {
+                drawFont = new Font(drawFont, FontStyle.Bold);
+            }
+
+            e.Graphics.DrawString(InstalledLB.Items[e.Index].ToString(),
+                drawFont, drawBrush, e.Bounds, StringFormat.GenericDefault);
+            e.DrawFocusRectangle();
+        }
+
 
         private void findDriftmoonDir() {
             string d = ProgramFilesx86() + "\\Driftmoon";
@@ -142,16 +178,14 @@ namespace driftmoon_mod_switcher {
             }
         }
 
-        private void CurrentModB_Click(object sender, EventArgs e) {
-            if (InstalledLB.SelectedItem == null)
-                return;
+        void InstalledLB_DoubleClick(object sender, EventArgs e) {
             string newMod = (string)InstalledLB.SelectedItem;
-            if (CurrentModT.Text == newMod)
+            if (currentMod == newMod)
                 return;
 
             changeMod(newMod);
 
-            refreshCurrentMod();
+            refreshMods();
         }
 
         private void changeMod(string newMod) {
