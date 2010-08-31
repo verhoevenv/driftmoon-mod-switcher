@@ -379,5 +379,9 @@ namespace driftmoon_mod_switcher {
         private void addLog(string logtxt) {
             LogT.AppendText(logtxt + Environment.NewLine);
         }
+
+        private void RefreshListB_Click(object sender, EventArgs e) {
+            refreshMods();
+        }
     }
 }

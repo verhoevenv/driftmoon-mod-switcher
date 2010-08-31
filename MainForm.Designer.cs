@@ -54,6 +54,7 @@ namespace driftmoon_mod_switcher
             this.InstallDirB = new System.Windows.Forms.Button();
             this.InstallFromZipB = new System.Windows.Forms.Button();
             this.LogT = new System.Windows.Forms.TextBox();
+            this.RefreshListB = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // InstalledLB
@@ -111,7 +112,7 @@ namespace driftmoon_mod_switcher
             // InstallFromZipB
             // 
             this.InstallFromZipB.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.InstallFromZipB.Location = new System.Drawing.Point(132, 230);
+            this.InstallFromZipB.Location = new System.Drawing.Point(252, 230);
             this.InstallFromZipB.Name = "InstallFromZipB";
             this.InstallFromZipB.Size = new System.Drawing.Size(194, 23);
             this.InstallFromZipB.TabIndex = 8;
@@ -132,11 +133,22 @@ namespace driftmoon_mod_switcher
             this.LogT.Size = new System.Drawing.Size(438, 128);
             this.LogT.TabIndex = 9;
             // 
+            // RefreshListB
+            // 
+            this.RefreshListB.Location = new System.Drawing.Point(12, 230);
+            this.RefreshListB.Name = "RefreshListB";
+            this.RefreshListB.Size = new System.Drawing.Size(115, 23);
+            this.RefreshListB.TabIndex = 10;
+            this.RefreshListB.Text = "Refresh mod list";
+            this.RefreshListB.UseVisualStyleBackColor = true;
+            this.RefreshListB.Click += new System.EventHandler(this.RefreshListB_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(458, 399);
+            this.Controls.Add(this.RefreshListB);
             this.Controls.Add(this.LogT);
             this.Controls.Add(this.InstallFromZipB);
             this.Controls.Add(this.InstallDirB);
@@ -162,6 +174,7 @@ namespace driftmoon_mod_switcher
         private System.Windows.Forms.Button InstallDirB;
         private System.Windows.Forms.Button InstallFromZipB;
         private System.Windows.Forms.TextBox LogT;
+        private System.Windows.Forms.Button RefreshListB;
     }
 }
 
