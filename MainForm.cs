@@ -337,25 +337,27 @@ namespace driftmoon_mod_switcher {
             return deps;
         }
 
+        private static List<FileInfo> getFilesInDir(string dirname) {
+            List<FileInfo> files = new List<FileInfo>();
+            DirectoryInfo dir = new DirectoryInfo(dirname);
+            DirectoryInfo[] subdirs = dir.GetDirectories();
+
+            files.AddRange(dir.GetFiles());
+
+            foreach (DirectoryInfo subdir in subdirs) {
+                string temppath = Path.Combine(dirname, subdir.Name);
+                files.AddRange(getFilesInDir(temppath));
+            }
+            return files;
+        }
+
         private static void DirectoryCopy(
             string sourceDirName, string destDirName) {
-            DirectoryInfo dir = new DirectoryInfo(sourceDirName);
-            DirectoryInfo[] dirs = dir.GetDirectories();
-
-            if (!Directory.Exists(destDirName)) {
-                Directory.CreateDirectory(destDirName);
-            }
-
-            FileInfo[] files = dir.GetFiles();
+            List<FileInfo> files = getFilesInDir(sourceDirName);
 
             foreach (FileInfo file in files) {
                 string temppath = Path.Combine(destDirName, file.Name);
                 file.CopyTo(temppath, false);
-            }
-
-            foreach (DirectoryInfo subdir in dirs) {
-                string temppath = Path.Combine(destDirName, subdir.Name);
-                DirectoryCopy(subdir.FullName, temppath);
             }
         }
 
