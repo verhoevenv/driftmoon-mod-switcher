@@ -344,8 +344,7 @@ namespace driftmoon_mod_switcher {
         }
 
         private void doWork(List<FileCopyJob> jobs) {
-            //TODO: make a progress bar
-            PleaseWait popup = new PleaseWait(1);
+            PleaseWait popup = new PleaseWait(jobs.Count);
             try {
                 int posx = this.Location.X + (this.Size.Width - popup.Size.Width) / 2;
                 int posy = this.Location.Y + (this.Size.Height - popup.Size.Height) / 2;
@@ -361,6 +360,7 @@ namespace driftmoon_mod_switcher {
                         addLog("Destination file already exists, skipping...");
                     }
                     job.doCopy();
+                    popup.addProgress();
                 }
 
             } catch (UnauthorizedAccessException ex) {
