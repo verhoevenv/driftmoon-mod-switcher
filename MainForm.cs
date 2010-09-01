@@ -306,7 +306,7 @@ namespace driftmoon_mod_switcher {
             string newMod = realmod.Substring(realmod.LastIndexOf("\\") + 1);
 
             //TODO: what if mod already installed?
-            PleaseWait popup = new PleaseWait();
+            PleaseWait popup = new PleaseWait(1);
             try {
                 int posx = this.Location.X + (this.Size.Width - popup.Size.Width) / 2;
                 int posy = this.Location.Y + (this.Size.Height - popup.Size.Height) / 2;

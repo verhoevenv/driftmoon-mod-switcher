@@ -24,10 +24,13 @@
         /// </summary>
         private void InitializeComponent() {
             this.label1 = new System.Windows.Forms.Label();
+            this.WorkPB = new System.Windows.Forms.ProgressBar();
             this.SuspendLayout();
             // 
             // label1
             // 
+            this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(12, 9);
             this.label1.Name = "label1";
@@ -35,12 +38,23 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Please wait... I am copying stuff.";
             // 
+            // WorkPB
+            // 
+            this.WorkPB.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.WorkPB.Location = new System.Drawing.Point(12, 29);
+            this.WorkPB.Name = "WorkPB";
+            this.WorkPB.Size = new System.Drawing.Size(161, 23);
+            this.WorkPB.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.WorkPB.TabIndex = 1;
+            // 
             // PleaseWait
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(185, 31);
+            this.ClientSize = new System.Drawing.Size(185, 64);
             this.ControlBox = false;
+            this.Controls.Add(this.WorkPB);
             this.Controls.Add(this.label1);
             this.MinimizeBox = false;
             this.Name = "PleaseWait";
@@ -53,5 +67,6 @@
         #endregion
 
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ProgressBar WorkPB;
     }
 }

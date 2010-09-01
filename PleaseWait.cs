@@ -9,8 +9,14 @@ using System.Windows.Forms;
 
 namespace driftmoon_mod_switcher {
     public partial class PleaseWait : Form {
-        public PleaseWait() {
+        public PleaseWait(int totalWork) {
             InitializeComponent();
+            WorkPB.Maximum = totalWork;
+            WorkPB.Step = 1;
+        }
+
+        public void addProgress(){
+            WorkPB.PerformStep();
         }
     }
 }
