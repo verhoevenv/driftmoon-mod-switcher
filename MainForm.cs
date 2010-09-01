@@ -349,15 +349,20 @@ namespace driftmoon_mod_switcher {
 
         private void installDependencies(string destinationMod) {
             string searchpath = InstallDirT.Text + "\\" + destinationMod;
-            List<FileInfo> toInstall = gatherDependencies(searchpath);
+
+            List<FileCopyJob> jobs = new List<FileCopyJob>();
+            foreach (FileInfo file in gatherDependencies(searchpath)) {
+                jobs.Add(new FileCopyJob(file, InstallDirT.Text + "\\mainmod", Path.Combine(InstallDirT.Text, destinationMod), false));
+            }
+
             //TODO: make a progress bar
-            foreach (FileInfo s in toInstall) {
-                string to = dependencyToDestination(s, destinationMod);
-                addLog(s.FullName + " --> " + to);
+            foreach (FileCopyJob job in jobs) {
+                string to = dependencyToDestination(job.source, destinationMod);
+                addLog(job.source.FullName + " --> " + to);
                 if (File.Exists(to)) {
                     addLog("Destination file already exists, skipping...");
                 }
-                copyRelativeFileCreateDir(s, InstallDirT.Text + "\\mainmod", Path.Combine(InstallDirT.Text, destinationMod), false);
+                job.doCopy();
             }
         }
 
@@ -459,28 +464,13 @@ namespace driftmoon_mod_switcher {
 
         private void DirectoryCopy(
             string sourceDirName, string destDirName) {
-            List<FileInfo> files = getFilesInDir(sourceDirName);
-
-            foreach (FileInfo file in files) {
-                copyRelativeFileCreateDir(file, sourceDirName, destDirName, false);
+            List<FileCopyJob> jobs = new List<FileCopyJob>();
+            foreach (FileInfo file in getFilesInDir(sourceDirName)) {
+                jobs.Add(new FileCopyJob(file, sourceDirName, destDirName, false));
             }
-        }
 
-        private void copyRelativeFileCreateDir(FileInfo source, string sourceRootDir, string toDir, bool overwrite) {
-            string filename = source.FullName;
-            string relativeFilename = "";
-            relativeFilename = filename.Substring(sourceRootDir.Length + 1);
-            string temppath = Path.Combine(toDir, relativeFilename);
-            FileInfo dest = new FileInfo(temppath);
-            if (!dest.Directory.Exists) {
-                dest.Directory.Create();
-            }
-            if (overwrite) {
-                source.CopyTo(temppath,true);
-            } else {
-                if (!dest.Exists) {
-                    source.CopyTo(temppath, overwrite);
-                }
+            foreach (FileCopyJob job in jobs) {
+                job.doCopy();
             }
         }
 
