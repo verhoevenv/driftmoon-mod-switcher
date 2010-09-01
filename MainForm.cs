@@ -304,29 +304,19 @@ namespace driftmoon_mod_switcher {
             }
             addLog("Trying to install from " + realmod);
             string newMod = realmod.Substring(realmod.LastIndexOf("\\") + 1);
+            string newModDir = InstallDirT.Text + "\\" + newMod;
+            List<FileCopyJob> jobs = new List<FileCopyJob>();
+            jobs.AddRange(gatherDirectoryCopyJobs(realmod, newModDir));
+            jobs.AddRange(gatherDependencyJobs(d, newModDir));
 
             //TODO: what if mod already installed?
-            PleaseWait popup = new PleaseWait(1);
-            try {
-                int posx = this.Location.X + (this.Size.Width - popup.Size.Width) / 2;
-                int posy = this.Location.Y + (this.Size.Height - popup.Size.Height) / 2;
-                popup.Show();
-                popup.Location = new Point(posx, posy);
-                popup.Update();
-                string newModDir = InstallDirT.Text + "\\" + newMod;
-                DirectoryCopy(realmod, newModDir);
-                foreach (FileInfo f in findReadmes(d)) {
-                    f.CopyTo(Path.Combine(newModDir,f.Name),true);
-                }
-                installDependencies(newMod);
-                setMod(newMod);
-                addLog("Succeeded installing " + newMod + "!");
-                refreshMods();
-            } catch (UnauthorizedAccessException ex) {
-                MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            } finally {
-                popup.Hide();
+            doWork(jobs);
+            foreach (FileInfo f in findReadmes(d)) {
+                f.CopyTo(Path.Combine(newModDir,f.Name),true);
             }
+            setMod(newMod);
+            addLog("Succeeded installing " + newMod + "!");
+            refreshMods();
         }
 
         private bool isModDir(string path) {
@@ -355,14 +345,28 @@ namespace driftmoon_mod_switcher {
 
         private void doWork(List<FileCopyJob> jobs) {
             //TODO: make a progress bar
-            //TODO: maybe put this in another thread to prevent not-responding thing
-            foreach (FileCopyJob job in jobs) {
-                string to = job.getDestinationPath();
-                //addLog(job.source.FullName + " --> " + to);
-                if (File.Exists(to)) {
-                    addLog("Destination file already exists, skipping...");
+            PleaseWait popup = new PleaseWait(1);
+            try {
+                int posx = this.Location.X + (this.Size.Width - popup.Size.Width) / 2;
+                int posy = this.Location.Y + (this.Size.Height - popup.Size.Height) / 2;
+                popup.Show();
+                popup.Location = new Point(posx, posy);
+                popup.Update();
+
+                //TODO: maybe put this in another thread to prevent not-responding thing
+                foreach (FileCopyJob job in jobs) {
+                    string to = job.getDestinationPath();
+                    //addLog(job.source.FullName + " --> " + to);
+                    if (File.Exists(to)) {
+                        addLog("Destination file already exists, skipping...");
+                    }
+                    job.doCopy();
                 }
-                job.doCopy();
+
+            } catch (UnauthorizedAccessException ex) {
+                MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            } finally {
+                popup.Hide();
             }
         }
 
@@ -450,14 +454,14 @@ namespace driftmoon_mod_switcher {
             return files;
         }
 
-        private void DirectoryCopy(
+        private List<FileCopyJob> gatherDirectoryCopyJobs(
             string sourceDirName, string destDirName) {
             List<FileCopyJob> jobs = new List<FileCopyJob>();
             foreach (FileInfo file in getFilesInDir(sourceDirName)) {
                 jobs.Add(new FileCopyJob(file, sourceDirName, destDirName, false));
             }
 
-            doWork(jobs);
+            return jobs;
         }
 
         static string ProgramFilesx86() {
