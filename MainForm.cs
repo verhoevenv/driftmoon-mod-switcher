@@ -105,7 +105,7 @@ namespace driftmoon_mod_switcher {
                 if (lastpart != "ui" && lastpart != "data") {
                     if (isModDir(dir)) {
                         try {
-                            List<FileCopyJob> files = gatherDependencies(dir);
+                            List<FileCopyJob> files = gatherDependencyJobs(dir,lastpart);
                             bool installed = true;
                             foreach (FileCopyJob f in files) {
                                 string dest = f.getDestinationPath();
@@ -351,7 +351,7 @@ namespace driftmoon_mod_switcher {
             string searchpath = InstallDirT.Text + "\\" + destinationMod;
 
             //TODO: make a progress bar
-            foreach (FileCopyJob job in gatherDependencies(searchpath)) {
+            foreach (FileCopyJob job in gatherDependencyJobs(searchpath,destinationMod)) {
                 string to = job.getDestinationPath();
                 addLog(job.source.FullName + " --> " + to);
                 if (File.Exists(to)) {
@@ -361,18 +361,18 @@ namespace driftmoon_mod_switcher {
             }
         }
 
-        private List<FileCopyJob> gatherDependencies(string moddir) {
+        private List<FileCopyJob> gatherDependencyJobs(string readmepath, string mod) {
             List<FileCopyJob> jobs = new List<FileCopyJob>();
-            List<string> paths = gatherDependenciesRaw(moddir);
-            string basedir = InstallDirT.Text + "\\mainmod";
+            List<string> paths = gatherDependenciesRaw(readmepath);
+            string mainmoddir = InstallDirT.Text + "\\mainmod";
             foreach (string path in paths) {
                 string from = Path.Combine(InstallDirT.Text, path);
                 if (File.Exists(from)) {
-                    jobs.Add(new FileCopyJob(new FileInfo(from), basedir, Path.Combine(InstallDirT.Text, moddir), false));
+                    jobs.Add(new FileCopyJob(new FileInfo(from), mainmoddir, Path.Combine(InstallDirT.Text, mod), false));
                 } else {
                     if (Directory.Exists(from)) {
                         foreach (FileInfo fi in getFilesInDir(from)) {
-                            jobs.Add(new FileCopyJob(fi, basedir, Path.Combine(InstallDirT.Text, moddir), false));
+                            jobs.Add(new FileCopyJob(fi, mainmoddir, Path.Combine(InstallDirT.Text, mod), false));
                         }
                     } else {
                         addLog("Dependency " + path + " missing!");
