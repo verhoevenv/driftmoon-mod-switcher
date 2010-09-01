@@ -349,8 +349,12 @@ namespace driftmoon_mod_switcher {
         private void installDependencies(string destinationMod) {
             string searchpath = InstallDirT.Text + "\\" + destinationMod;
 
+            doWork(gatherDependencyJobs(searchpath,destinationMod));
+        }
+
+        private void doWork(List<FileCopyJob> jobs) {
             //TODO: make a progress bar
-            foreach (FileCopyJob job in gatherDependencyJobs(searchpath,destinationMod)) {
+            foreach (FileCopyJob job in jobs) {
                 string to = job.getDestinationPath();
                 addLog(job.source.FullName + " --> " + to);
                 if (File.Exists(to)) {
@@ -451,9 +455,7 @@ namespace driftmoon_mod_switcher {
                 jobs.Add(new FileCopyJob(file, sourceDirName, destDirName, false));
             }
 
-            foreach (FileCopyJob job in jobs) {
-                job.doCopy();
-            }
+            doWork(jobs);
         }
 
         static string ProgramFilesx86() {
