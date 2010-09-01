@@ -108,8 +108,7 @@ namespace driftmoon_mod_switcher {
                             List<FileCopyJob> files = gatherDependencyJobs(dir,lastpart);
                             bool installed = true;
                             foreach (FileCopyJob f in files) {
-                                string dest = f.getDestinationPath();
-                                if (!File.Exists(dest)) {
+                                if (!f.destExists()) {
                                     installed = false;
                                     break;
                                 }
