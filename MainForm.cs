@@ -263,7 +263,7 @@ namespace driftmoon_mod_switcher {
         }
 
         private bool isModDir(string path) {
-            return Directory.Exists(path) && Directory.Exists(path + "\\script");
+            return Directory.Exists(path) && Directory.Exists(path + "\\maps");
         }
 
         private void installDependencies(string searchpath, string destinationMod) {
