@@ -19,10 +19,7 @@ namespace driftmoon_mod_switcher {
         }
 
         public void doCopy() {
-            string filename = source.FullName;
-            string relativeFilename = "";
-            relativeFilename = filename.Substring(sourceRootDir.Length + 1);
-            string temppath = Path.Combine(destDir, relativeFilename);
+            string temppath = getDestinationPath();
             FileInfo dest = new FileInfo(temppath);
             if (!dest.Directory.Exists) {
                 dest.Directory.Create();
@@ -34,6 +31,22 @@ namespace driftmoon_mod_switcher {
                     source.CopyTo(temppath, overwrite);
                 }
             }
+        }
+
+        public string getDestinationPath(){
+            string filename = source.FullName;
+            string relativeFilename = "";
+            relativeFilename = filename.Substring(sourceRootDir.Length + 1);
+            string temppath = Path.Combine(destDir, relativeFilename);
+            return temppath;
+        }
+
+        public bool sourceExists() {
+            return source.Exists;
+        }
+
+        public bool destExists() {
+            return File.Exists(getDestinationPath());
         }
     }
 }
