@@ -149,6 +149,8 @@ namespace driftmoon_mod_switcher {
             Brush drawBrush = Brushes.Black;
             Font drawFont = e.Font;
 
+            if (e.Index == -1)
+                return;
 
             string mod = (string)InstalledLB.Items[e.Index];
             switch(getInstallStatus(mod)) {
