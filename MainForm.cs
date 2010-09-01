@@ -355,6 +355,7 @@ namespace driftmoon_mod_switcher {
 
         private void doWork(List<FileCopyJob> jobs) {
             //TODO: make a progress bar
+            //TODO: maybe put this in another thread to prevent not-responding thing
             foreach (FileCopyJob job in jobs) {
                 string to = job.getDestinationPath();
                 //addLog(job.source.FullName + " --> " + to);
