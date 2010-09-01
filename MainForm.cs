@@ -105,10 +105,10 @@ namespace driftmoon_mod_switcher {
                 if (lastpart != "ui" && lastpart != "data") {
                     if (isModDir(dir)) {
                         try {
-                            List<FileInfo> files = gatherDependencies(dir);
+                            List<FileCopyJob> files = gatherDependencies(dir);
                             bool installed = true;
-                            foreach (FileInfo f in files) {
-                                string dest = dependencyToDestination(f, lastpart);
+                            foreach (FileCopyJob f in files) {
+                                string dest = f.getDestinationPath();
                                 if (!File.Exists(dest)) {
                                     installed = false;
                                     break;
@@ -350,14 +350,9 @@ namespace driftmoon_mod_switcher {
         private void installDependencies(string destinationMod) {
             string searchpath = InstallDirT.Text + "\\" + destinationMod;
 
-            List<FileCopyJob> jobs = new List<FileCopyJob>();
-            foreach (FileInfo file in gatherDependencies(searchpath)) {
-                jobs.Add(new FileCopyJob(file, InstallDirT.Text + "\\mainmod", Path.Combine(InstallDirT.Text, destinationMod), false));
-            }
-
             //TODO: make a progress bar
-            foreach (FileCopyJob job in jobs) {
-                string to = dependencyToDestination(job.source, destinationMod);
+            foreach (FileCopyJob job in gatherDependencies(searchpath)) {
+                string to = job.getDestinationPath();
                 addLog(job.source.FullName + " --> " + to);
                 if (File.Exists(to)) {
                     addLog("Destination file already exists, skipping...");
@@ -366,38 +361,26 @@ namespace driftmoon_mod_switcher {
             }
         }
 
-        private string dependencyToDestination(FileInfo dep, string destinationMod) {
-            string filename = dep.FullName;
-            string relativeFilename = "";
-            if (filename.Contains("mainmod")) {
-                relativeFilename = filename.Substring(filename.IndexOf("mainmod") + "mainmod\\".Length);
-            } else {
-                //drop files not from mainmod (like readme) plainly into the root dir
-                relativeFilename = dep.Name;
-            }
-            string to = InstallDirT.Text +"\\" + destinationMod + "\\" + relativeFilename;
-            return to;
-        }
-
-        private List<FileInfo> gatherDependencies(string moddir) {
-            //returns list of files, expands dirs into files
+        private List<FileCopyJob> gatherDependencies(string moddir) {
+            List<FileCopyJob> jobs = new List<FileCopyJob>();
             List<string> paths = gatherDependenciesRaw(moddir);
-            List<FileInfo> files = new List<FileInfo>();
-            string basedir = InstallDirT.Text;
+            string basedir = InstallDirT.Text + "\\mainmod";
             foreach (string path in paths) {
-                string from = Path.Combine(basedir, path);
+                string from = Path.Combine(InstallDirT.Text, path);
                 if (File.Exists(from)) {
-                    files.Add(new FileInfo(from));
+                    jobs.Add(new FileCopyJob(new FileInfo(from), basedir, Path.Combine(InstallDirT.Text, moddir), false));
                 } else {
                     if (Directory.Exists(from)) {
-                        files.AddRange(getFilesInDir(from));
+                        foreach (FileInfo fi in getFilesInDir(from)) {
+                            jobs.Add(new FileCopyJob(fi, basedir, Path.Combine(InstallDirT.Text, moddir), false));
+                        }
                     } else {
                         addLog("Dependency " + path + " missing!");
                         throw new DependencyBrokenException();
                     }
                 }
             }
-            return files;
+            return jobs;
         }
 
         private List<string> gatherDependenciesRaw(string moddir) {
