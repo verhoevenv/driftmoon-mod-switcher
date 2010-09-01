@@ -357,7 +357,7 @@ namespace driftmoon_mod_switcher {
             //TODO: make a progress bar
             foreach (FileCopyJob job in jobs) {
                 string to = job.getDestinationPath();
-                addLog(job.source.FullName + " --> " + to);
+                //addLog(job.source.FullName + " --> " + to);
                 if (File.Exists(to)) {
                     addLog("Destination file already exists, skipping...");
                 }
