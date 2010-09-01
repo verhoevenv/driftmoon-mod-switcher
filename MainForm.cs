@@ -386,4 +386,9 @@ namespace driftmoon_mod_switcher {
             refreshMods();
         }
     }
+
+    public class DependencyBrokenException : Exception {
+
+    }
+
 }
