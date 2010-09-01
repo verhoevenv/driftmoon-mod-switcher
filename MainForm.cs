@@ -34,7 +34,8 @@ namespace driftmoon_mod_switcher {
         private Regex readmePathPattern = new Regex(@"^[/\\]?(([\w.])+[/\\])*([\w.]*)?\r?$", RegexOptions.Multiline);
         private Boolean settingsChanged = false;
         private string currentMod = "";
-        private Dictionary<string, bool> fullyInstalled = new Dictionary<string, bool>();
+        private Dictionary<string, installStatus> fullyInstalled = new Dictionary<string, installStatus>();
+        private enum installStatus { OK, NOT_INSTALLED, DEPENDENCY_BROKEN, INSTALLABLE_FROM_HERE, NON_MOD_DIR };
 
         public MainForm() {
             InitializeComponent();
@@ -102,14 +103,40 @@ namespace driftmoon_mod_switcher {
             foreach (string dir in dirs) {
                 string lastpart = dir.Substring(dir.LastIndexOf("\\") + 1);
                 if (lastpart != "ui" && lastpart != "data") {
-                    fullyInstalled[lastpart] = true;
+                    if (isModDir(dir)) {
+                        try {
+                            List<FileInfo> files = gatherDependencies(dir);
+                            bool installed = true;
+                            foreach (FileInfo f in files) {
+                                string dest = dependencyToDestination(f, lastpart);
+                                if (!File.Exists(dest)) {
+                                    installed = false;
+                                    break;
+                                }
+                            }
+                            if (installed) {
+                                fullyInstalled[lastpart] = installStatus.OK;
+                            } else {
+                                addLog("Dependencies for " + lastpart + " seem to be incomplete");
+                                fullyInstalled[lastpart] = installStatus.NOT_INSTALLED;
+                            }
+                        } catch (DependencyBrokenException) {
+                            fullyInstalled[lastpart] = installStatus.DEPENDENCY_BROKEN;
+                        }
+                    } else {
+                        if (isInstallableDir(dir)) {
+                            fullyInstalled[lastpart] = installStatus.INSTALLABLE_FROM_HERE;
+                        } else {
+                            fullyInstalled[lastpart] = installStatus.NON_MOD_DIR;
+                        }
+                    }
                 }
             }
             InstalledLB.Items.Clear();
             InstalledLB.Items.AddRange(fullyInstalled.Keys.ToArray());
         }
 
-        private bool isFullyInstalled(string mod) {
+        private installStatus getInstallStatus(string mod) {
             return fullyInstalled[mod];
         }
 
@@ -124,8 +151,22 @@ namespace driftmoon_mod_switcher {
 
 
             string mod = (string)InstalledLB.Items[e.Index];
-            if (! isFullyInstalled(mod)) {
-               drawBrush = Brushes.Gray;
+            switch(getInstallStatus(mod)) {
+                case installStatus.NOT_INSTALLED:
+                    drawBrush = Brushes.Gray;
+                    break;
+                case installStatus.DEPENDENCY_BROKEN:
+                    drawBrush = Brushes.Red;
+                    break;
+                case installStatus.NON_MOD_DIR:
+                    drawBrush = Brushes.Purple;
+                    break;
+                case installStatus.INSTALLABLE_FROM_HERE:
+                    drawBrush = Brushes.Green;
+                    break;
+                case installStatus.OK:
+                    drawBrush = Brushes.Black;
+                    break;
             }
             if (isCurrentMod(mod)) {
                 drawFont = new Font(drawFont, FontStyle.Bold);
@@ -189,6 +230,27 @@ namespace driftmoon_mod_switcher {
         }
 
         private void changeMod(string newMod) {
+            switch (getInstallStatus(newMod)) {
+                case installStatus.NOT_INSTALLED:
+                    installDependencies(newMod);
+                    setMod(newMod);
+                    break;
+                case installStatus.DEPENDENCY_BROKEN:
+                    MessageBox.Show("This mod has a dependency that couldn't be found. I won't let you play around with it.", "Oops", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    break;
+                case installStatus.NON_MOD_DIR:
+                    MessageBox.Show("So this directory is a random unclassifiable directory unrelated to Driftmoon. I have no idea how you managed to put this thing here, but you can be proud of yourself. Nothing much more you can do with it though.", "Congratulations", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    break;
+                case installStatus.INSTALLABLE_FROM_HERE:
+                    installMod(InstallDirT.Text + "\\" + newMod);
+                    break;
+                case installStatus.OK:
+                    setMod(newMod);
+                    break;
+            }
+        }
+
+        private void setMod(string newMod) {
             addLog("Setting current mod to " + newMod);
             TextReader tr = new StreamReader(InstallDirT.Text + "\\options.ini");
             List<string> lines = new List<string>();
@@ -229,36 +291,39 @@ namespace driftmoon_mod_switcher {
 
         private void installMod(string d) {
             string realmod = d;
+            if (!isInstallableDir(d)) {
+                MessageBox.Show("No mod found in this directory, sorry!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             if (!isModDir(d)) {
                 string[] subdirs = Directory.GetDirectories(d);
-                if (subdirs.Length == 1) {
-                    addLog("No mod found here, trying subdirectory...");
-                    realmod = subdirs[0];
-                } else {
-                    MessageBox.Show("No mod found in this directory, sorry!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                realmod = subdirs[0];
+                addLog("No mod found here, going to subdirectory.");
             }
             addLog("Trying to install from " + realmod);
             string newMod = realmod.Substring(realmod.LastIndexOf("\\") + 1);
 
             //TODO: what if mod already installed?
+            PleaseWait popup = new PleaseWait();
             try {
-                PleaseWait popup = new PleaseWait();
                 int posx = this.Location.X + (this.Size.Width - popup.Size.Width) / 2;
                 int posy = this.Location.Y + (this.Size.Height - popup.Size.Height) / 2;
                 popup.Show();
                 popup.Location = new Point(posx, posy);
                 popup.Update();
-                DirectoryCopy(realmod, InstallDirT.Text + "\\" + newMod);
-                installDependencies(d, newMod);
-                installDependencies(InstallDirT.Text + "\\" + newMod, newMod);
-                changeMod(newMod);
+                string newModDir = InstallDirT.Text + "\\" + newMod;
+                DirectoryCopy(realmod, newModDir);
+                foreach (FileInfo f in findReadmes(d)) {
+                    f.CopyTo(Path.Combine(newModDir,f.Name),true);
+                }
+                installDependencies(newMod);
+                setMod(newMod);
                 addLog("Succeeded installing " + newMod + "!");
                 refreshMods();
-                popup.Hide();
             } catch (UnauthorizedAccessException ex) {
                 MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            } finally {
+                popup.Hide();
             }
         }
 
@@ -266,78 +331,117 @@ namespace driftmoon_mod_switcher {
             return Directory.Exists(path) && Directory.Exists(path + "\\maps");
         }
 
-        private void installDependencies(string searchpath, string destinationMod) {
-            List<string> toInstall = gatherDependencies(searchpath);
-            //TODO: might want to make some sort of abstract 'Tasks' of the copy jobs to make a progress bar
-            string basedir = InstallDirT.Text;
-            List<string> errors = new List<string>();
-            foreach (string s in toInstall) {
-                string from = basedir + "\\" + s;
-                string to = basedir + "\\" + destinationMod + "\\" + s.Substring("mainmod\\".Length);
-                addLog(from + " --> " + to);
-                if (File.Exists(from)) {
-                    if (File.Exists(to)) {
-                        addLog("Destination file already exists, skipping...");
-                    }
-                    File.Copy(from, to, false);
-                } else {
-                    if (Directory.Exists(from)) {
-                        if (Directory.Exists(to)) {
-                            addLog("Destination directory already exists, merging but skipping existing files...");
-                        }
-                        DirectoryCopy(from, to);
-                    } else {
-                        addLog("Source file missing!");
-                        errors.Add("The following dependency was not found and could not be copied: " + from);
-                    }
-                }
-            }
-            if (errors.Count > 0) {
-                string errormsg = string.Join(Environment.NewLine, errors.ToArray());
-                MessageBox.Show(errormsg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        private bool isInstallableDir(string path) {
+            if (!Directory.Exists(path))
+                return false;
+            if (isModDir(path))
+                return true;
+            string[] subdirs = Directory.GetDirectories(path);
+            if (subdirs.Length == 1) {
+                string realmod = subdirs[0];
+                return isModDir(realmod);
+            } else {
+                return false;
             }
         }
 
-        private List<string> gatherDependencies(string moddir) {
+        private void installDependencies(string destinationMod) {
+            string searchpath = InstallDirT.Text + "\\" + destinationMod;
+            List<FileInfo> toInstall = gatherDependencies(searchpath);
+            //TODO: make a progress bar
+            foreach (FileInfo s in toInstall) {
+                string to = dependencyToDestination(s, destinationMod);
+                addLog(s.FullName + " --> " + to);
+                if (File.Exists(to)) {
+                    addLog("Destination file already exists, skipping...");
+                }
+                copyRelativeFileCreateDir(s, InstallDirT.Text + "\\mainmod", Path.Combine(InstallDirT.Text, destinationMod), false);
+            }
+        }
+
+        private string dependencyToDestination(FileInfo dep, string destinationMod) {
+            string filename = dep.FullName;
+            string relativeFilename = "";
+            if (filename.Contains("mainmod")) {
+                relativeFilename = filename.Substring(filename.IndexOf("mainmod") + "mainmod\\".Length);
+            } else {
+                //drop files not from mainmod (like readme) plainly into the root dir
+                relativeFilename = dep.Name;
+            }
+            string to = InstallDirT.Text +"\\" + destinationMod + "\\" + relativeFilename;
+            return to;
+        }
+
+        private List<FileInfo> gatherDependencies(string moddir) {
+            //returns list of files, expands dirs into files
+            List<string> paths = gatherDependenciesRaw(moddir);
+            List<FileInfo> files = new List<FileInfo>();
+            string basedir = InstallDirT.Text;
+            foreach (string path in paths) {
+                string from = Path.Combine(basedir, path);
+                if (File.Exists(from)) {
+                    files.Add(new FileInfo(from));
+                } else {
+                    if (Directory.Exists(from)) {
+                        files.AddRange(getFilesInDir(from));
+                    } else {
+                        addLog("Dependency " + path + " missing!");
+                        throw new DependencyBrokenException();
+                    }
+                }
+            }
+            return files;
+        }
+
+        private List<string> gatherDependenciesRaw(string moddir) {
             //paths returned do not include "Driftmoon", starting nor trailing slashes
             List<string> deps = new List<string>();
-            DirectoryInfo di = new DirectoryInfo(moddir);
-            FileInfo[] fis = di.GetFiles();
+            List<FileInfo> fis = findReadmes(moddir);
             foreach (FileInfo fi in fis) {
-                string s = fi.Name.ToLower();
-                if (s.Contains("readme")) {
-                    TextReader tr = fi.OpenText();
-                    string contents = tr.ReadToEnd();
-                    tr.Close();
-                    MatchCollection matches = readmePathPattern.Matches(contents);
-                    if (matches.Count != 0) {
-                        addLog("Found dependencies in " + s + ", installing...");
+                TextReader tr = fi.OpenText();
+                string contents = tr.ReadToEnd();
+                tr.Close();
+                MatchCollection matches = readmePathPattern.Matches(contents);
+                if (matches.Count != 0) {
+                    addLog("Found dependencies in " + fi.FullName);
+                }
+                foreach (Match match in matches) {
+                    string path = match.ToString();
+                    if (path.EndsWith("\r")) {
+                        path = path.Remove(path.Length - 1);
                     }
-                    foreach (Match match in matches) {
-                        string path = match.ToString();
-                        if (path.EndsWith("\r")) {
-                            path = path.Remove(path.Length - 1);
-                        }
-                        path = path.Replace("/", "\\");
-                        if (path.StartsWith("\\")) {
-                            path = path.Substring(path.Length - 1);
-                        }
-                        if (path.StartsWith("Driftmoon\\")) {
-                            path = path.Substring("Driftmoon\\".Length);
-                        }
-                        if (path.EndsWith("\\")) {
-                            path = path.Remove(path.Length - 1);
-                        }
-                        if (!path.Equals("")) {
-                            deps.Add(path);
-                        }
+                    path = path.Replace("/", "\\");
+                    if (path.StartsWith("\\")) {
+                        path = path.Substring(path.Length - 1);
+                    }
+                    if (path.StartsWith("Driftmoon\\")) {
+                        path = path.Substring("Driftmoon\\".Length);
+                    }
+                    if (path.EndsWith("\\")) {
+                        path = path.Remove(path.Length - 1);
+                    }
+                    if (!path.Equals("")) {
+                        deps.Add(path);
                     }
                 }
             }
             return deps;
         }
 
-        private static List<FileInfo> getFilesInDir(string dirname) {
+        private List<FileInfo> findReadmes(string dir) {
+            List<FileInfo> readmes = new List<FileInfo>();
+            DirectoryInfo di = new DirectoryInfo(dir);
+            FileInfo[] fis = di.GetFiles();
+            foreach (FileInfo fi in fis) {
+                string s = fi.Name.ToLower();
+                if (s.Contains("readme")) {
+                    readmes.Add(fi);
+                }
+            }
+            return readmes;
+        }
+
+        private List<FileInfo> getFilesInDir(string dirname) {
             List<FileInfo> files = new List<FileInfo>();
             DirectoryInfo dir = new DirectoryInfo(dirname);
             DirectoryInfo[] subdirs = dir.GetDirectories();
@@ -351,13 +455,30 @@ namespace driftmoon_mod_switcher {
             return files;
         }
 
-        private static void DirectoryCopy(
+        private void DirectoryCopy(
             string sourceDirName, string destDirName) {
             List<FileInfo> files = getFilesInDir(sourceDirName);
 
             foreach (FileInfo file in files) {
-                string temppath = Path.Combine(destDirName, file.Name);
-                file.CopyTo(temppath, false);
+                copyRelativeFileCreateDir(file, sourceDirName, destDirName, false);
+            }
+        }
+
+        private void copyRelativeFileCreateDir(FileInfo source, string sourceRootDir, string toDir, bool overwrite) {
+            string filename = source.FullName;
+            string relativeFilename = "";
+            relativeFilename = filename.Substring(sourceRootDir.Length + 1);
+            string temppath = Path.Combine(toDir, relativeFilename);
+            FileInfo dest = new FileInfo(temppath);
+            if (!dest.Directory.Exists) {
+                dest.Directory.Create();
+            }
+            if (overwrite) {
+                source.CopyTo(temppath,true);
+            } else {
+                if (!dest.Exists) {
+                    source.CopyTo(temppath, overwrite);
+                }
             }
         }
 
