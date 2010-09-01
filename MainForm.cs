@@ -99,6 +99,7 @@ namespace driftmoon_mod_switcher {
         }
 
         private void refreshModList() {
+            fullyInstalled = new Dictionary<string, installStatus>();
             string[] dirs = Directory.GetDirectories(InstallDirT.Text);
             foreach (string dir in dirs) {
                 string lastpart = dir.Substring(dir.LastIndexOf("\\") + 1);
