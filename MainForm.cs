@@ -192,7 +192,7 @@ namespace driftmoon_mod_switcher {
             if (isDriftmoonDir(d)) {
                 addLog("Found Driftmoon directory...");
                 InstallDirT.Text = d;
-                dmVersion = new DriftmoonVersion(d);
+                dmVersion = DriftmoonVersion.getDriftmoonVersion(d);
                 addLog(dmVersion.ToString());
                 refreshMods();
             } else {
@@ -216,7 +216,7 @@ namespace driftmoon_mod_switcher {
                 if (isDriftmoonDir(d)) {
                     settingsChanged = true;
                     InstallDirT.Text = d;
-                    dmVersion = new DriftmoonVersion(d);
+                    dmVersion = DriftmoonVersion.getDriftmoonVersion(d);
                     addLog(dmVersion.ToString());
                     refreshMods();
                 } else {
