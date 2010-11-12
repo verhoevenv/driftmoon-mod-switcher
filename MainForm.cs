@@ -27,6 +27,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace driftmoon_mod_switcher {
     public partial class MainForm : Form {
@@ -34,6 +35,7 @@ namespace driftmoon_mod_switcher {
         private Regex readmePathPattern = new Regex(@"^[/\\]?(([\w.])+[/\\])*([\w.]*)?\r?$", RegexOptions.Multiline);
         private Boolean settingsChanged = false;
         private string currentMod = "";
+        private DriftmoonVersion dmVersion;
         private Dictionary<string, installStatus> fullyInstalled = new Dictionary<string, installStatus>();
         private enum installStatus { OK, NOT_INSTALLED, DEPENDENCY_BROKEN, INSTALLABLE_FROM_HERE, NON_MOD_DIR };
 
@@ -190,6 +192,8 @@ namespace driftmoon_mod_switcher {
             if (isDriftmoonDir(d)) {
                 addLog("Found Driftmoon directory...");
                 InstallDirT.Text = d;
+                dmVersion = new DriftmoonVersion(d);
+                addLog(dmVersion.ToString());
                 refreshMods();
             } else {
                 MessageBox.Show("No Driftmoon directory found in " + d +
@@ -199,8 +203,7 @@ namespace driftmoon_mod_switcher {
         }
 
         private bool isDriftmoonDir(string path) {
-            return Directory.Exists(path) && File.Exists(path + "\\Driftmoon.exe")
-                && File.Exists(path + "\\options.ini");
+            return Directory.Exists(path) && File.Exists(path + "\\Driftmoon.exe");
         }
 
         private void InstallDirB_Click(object sender, EventArgs e) {
@@ -213,6 +216,8 @@ namespace driftmoon_mod_switcher {
                 if (isDriftmoonDir(d)) {
                     settingsChanged = true;
                     InstallDirT.Text = d;
+                    dmVersion = new DriftmoonVersion(d);
+                    addLog(dmVersion.ToString());
                     refreshMods();
                 } else {
                     MessageBox.Show("This is not a valid Driftmoon install directory!",
