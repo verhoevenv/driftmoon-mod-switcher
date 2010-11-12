@@ -5,6 +5,8 @@ using System.Text;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace driftmoon_mod_switcher {
     abstract class DriftmoonVersion {
@@ -52,6 +54,8 @@ namespace driftmoon_mod_switcher {
     }
 
     class PreviewVersion : DriftmoonVersion {
+        private Regex modPattern = new Regex("^Mod=([\\w-]*)", RegexOptions.Multiline);
+
         public PreviewVersion(string path)
             : base(path) {
         }
@@ -88,7 +92,7 @@ namespace driftmoon_mod_switcher {
             tr.Close();
 
             try {
-                TextWriter tw = new StreamWriter(InstallDirT.Text + "\\options.ini");
+                TextWriter tw = new StreamWriter(this.path + "\\options.ini");
                 foreach (string line in lines) {
                     Match m = modPattern.Match(line);
                     if (m.Success) {
@@ -106,6 +110,8 @@ namespace driftmoon_mod_switcher {
     }
 
     class NonPreviewVersion : DriftmoonVersion {
+        RegistryKey hkcusd = Registry.CurrentUser.OpenSubKey("Software\\Driftmoon");
+
         public NonPreviewVersion(string path)
             : base(path) {
         }
@@ -116,6 +122,15 @@ namespace driftmoon_mod_switcher {
 
         public override bool usesOptions() {
             return false;
+        }
+
+        public override string getCurrentMod() {
+            string currMod = hkcusd.GetValue("modPath").ToString();
+            return currMod;
+        }
+
+        public override void setMod(string newMod) {
+            //TODO
         }
     }
 }

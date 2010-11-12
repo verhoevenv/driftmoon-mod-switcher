@@ -31,7 +31,6 @@ using System.Security.Cryptography;
 
 namespace driftmoon_mod_switcher {
     public partial class MainForm : Form {
-        private Regex modPattern = new Regex("^Mod=([\\w-]*)", RegexOptions.Multiline);
         private Regex readmePathPattern = new Regex(@"^[/\\]?(([\w.])+[/\\])*([\w.]*)?\r?$", RegexOptions.Multiline);
         private Boolean settingsChanged = false;
         private string currentMod = "";
