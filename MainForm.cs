@@ -76,26 +76,13 @@ namespace driftmoon_mod_switcher {
         private void refreshMods() {
             addLog("Searching for mods...");
             refreshModList();
-            currentMod = getCurrentMod();
+            currentMod = dmVersion.getCurrentMod();
             addLog("Found all mods.");
         }
 
-        private string getCurrentMod() {
-            TextReader tr = new StreamReader(InstallDirT.Text + "\\options.ini");
-            string options = tr.ReadToEnd();
-            tr.Close();
-            Match m = modPattern.Match(options);
-            string mod = m.Groups[1].Value;
-            Match m2 = m.NextMatch();
-            if (m2.Success) {
-                throw new ApplicationException("Multiple mods defined in options.ini, fix this first please.");
-            }
-            return mod;
-        }
-
-        private bool isCurrentMod(string mod) {
+        public bool isCurrentMod(string mod) {
             if (currentMod == null) {
-                currentMod = getCurrentMod();
+                currentMod = dmVersion.getCurrentMod();
             }
             return currentMod.Equals(mod);
         }
@@ -259,30 +246,7 @@ namespace driftmoon_mod_switcher {
 
         private void setMod(string newMod) {
             addLog("Setting current mod to " + newMod);
-            TextReader tr = new StreamReader(InstallDirT.Text + "\\options.ini");
-            List<string> lines = new List<string>();
-            string l = tr.ReadLine();
-            while (l != null) {
-                lines.Add(l);
-                l = tr.ReadLine();
-            }
-            tr.Close();
-
-            try {
-                TextWriter tw = new StreamWriter(InstallDirT.Text + "\\options.ini");
-                foreach (string line in lines) {
-                    Match m = modPattern.Match(line);
-                    if (m.Success) {
-                        //FIXME: if no line "Mod=" exists, no new will be written?
-                        tw.WriteLine("Mod=" + newMod);
-                    } else {
-                        tw.WriteLine(line);
-                    }
-                }
-                tw.Close();
-            } catch (UnauthorizedAccessException ex) {
-                MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            dmVersion.setMod(newMod);
         }
 
         private void InstallModB_Click(object sender, EventArgs e) {
