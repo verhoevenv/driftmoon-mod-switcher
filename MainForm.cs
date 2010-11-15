@@ -170,22 +170,23 @@ namespace driftmoon_mod_switcher {
 
         private void findDriftmoonDir() {
             string d = ProgramFilesx86() + "\\Driftmoon";
-            setDriftmoonDir(d);
-        }
-
-        private void setDriftmoonDir(string d) {
-            clearLog();
             if (isDriftmoonDir(d)) {
-                addLog("Found Driftmoon directory...");
-                InstallDirT.Text = d;
-                dmVersion = DriftmoonVersion.getDriftmoonVersion(d);
-                addLog(dmVersion.ToString());
-                refreshMods();
+                setDriftmoonDir(d);
             } else {
                 MessageBox.Show("No Driftmoon directory found in " + d +
                     ", please select a valid Driftmoon directory", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void setDriftmoonDir(string d) {
+            settingsChanged = true;
+            clearLog();
+            addLog("Found Driftmoon directory...");
+            InstallDirT.Text = d;
+            dmVersion = DriftmoonVersion.getDriftmoonVersion(d);
+            addLog(dmVersion.ToString());
+            refreshMods();
         }
 
         private bool isDriftmoonDir(string path) {
@@ -200,11 +201,7 @@ namespace driftmoon_mod_switcher {
             if (result == DialogResult.OK) {
                 string d = f.SelectedPath;
                 if (isDriftmoonDir(d)) {
-                    settingsChanged = true;
-                    InstallDirT.Text = d;
-                    dmVersion = DriftmoonVersion.getDriftmoonVersion(d);
-                    addLog(dmVersion.ToString());
-                    refreshMods();
+                    setDriftmoonDir(d);
                 } else {
                     MessageBox.Show("This is not a valid Driftmoon install directory!",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
