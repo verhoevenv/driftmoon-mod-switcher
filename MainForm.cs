@@ -183,10 +183,14 @@ namespace driftmoon_mod_switcher {
             settingsChanged = true;
             clearLog();
             addLog("Found Driftmoon directory...");
-            InstallDirT.Text = d;
-            dmVersion = DriftmoonVersion.getDriftmoonVersion(d);
-            addLog(dmVersion.ToString());
-            refreshMods();
+            try {
+                dmVersion = DriftmoonVersion.getDriftmoonVersion(d);
+                addLog(dmVersion.ToString());
+                InstallDirT.Text = d;
+                refreshMods();
+            } catch (UnauthorizedAccessException ex) {
+                MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private bool isDriftmoonDir(string path) {
