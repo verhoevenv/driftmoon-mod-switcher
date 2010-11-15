@@ -106,8 +106,6 @@ namespace driftmoon_mod_switcher {
     }
 
     class NonPreviewVersion : DriftmoonVersion {
-        RegistryKey hkcusd = Registry.CurrentUser.OpenSubKey("Software\\Driftmoon");
-
         public NonPreviewVersion(string path)
             : base(path) {
         }
@@ -121,12 +119,14 @@ namespace driftmoon_mod_switcher {
         }
 
         public override string getCurrentMod() {
+            RegistryKey hkcusd = Registry.CurrentUser.OpenSubKey("Software\\Driftmoon");
             string currMod = hkcusd.GetValue("modPath").ToString();
             return currMod;
         }
 
         public override void setMod(string newMod) {
-            //TODO
+            RegistryKey hkcusd = Registry.CurrentUser.OpenSubKey("Software\\Driftmoon",true);
+            hkcusd.SetValue("modPath", newMod);
         }
     }
 }
