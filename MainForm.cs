@@ -218,7 +218,11 @@ namespace driftmoon_mod_switcher {
             if (currentMod == newMod)
                 return;
 
-            changeMod(newMod);
+            try {
+                changeMod(newMod);
+            } catch (UnauthorizedAccessException ex) {
+                MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             refreshMods();
         }
@@ -331,9 +335,6 @@ namespace driftmoon_mod_switcher {
                     job.doCopy();
                     popup.addProgress();
                 }
-
-            } catch (UnauthorizedAccessException ex) {
-                MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             } finally {
                 popup.Hide();
             }

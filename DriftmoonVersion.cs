@@ -91,21 +91,17 @@ namespace driftmoon_mod_switcher {
             }
             tr.Close();
 
-            try {
-                TextWriter tw = new StreamWriter(this.path + "\\options.ini");
-                foreach (string line in lines) {
-                    Match m = modPattern.Match(line);
-                    if (m.Success) {
-                        //FIXME: if no line "Mod=" exists, no new will be written?
-                        tw.WriteLine("Mod=" + newMod);
-                    } else {
-                        tw.WriteLine(line);
-                    }
+            TextWriter tw = new StreamWriter(this.path + "\\options.ini");
+            foreach (string line in lines) {
+                Match m = modPattern.Match(line);
+                if (m.Success) {
+                    //FIXME: if no line "Mod=" exists, no new will be written?
+                    tw.WriteLine("Mod=" + newMod);
+                } else {
+                    tw.WriteLine(line);
                 }
-                tw.Close();
-            } catch (UnauthorizedAccessException ex) {
-                MessageBox.Show("Windows told me: \"" + ex.Message + "\" Perhaps try running as administrator?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            tw.Close();
         }
     }
 
